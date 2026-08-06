@@ -50,7 +50,9 @@ describe("sqljs driver > query execution time", () => {
             dataSources.map(async (dataSource) => {
                 const subscriber = dataSource
                     .subscribers[0] as QueryExecutionTimeSubscriber
+                const logger = dataSource.options.logger as RecordingLogger
                 subscriber.clear()
+                logger.slowQueries.length = 0
 
                 const startedAt = Date.now()
                 await dataSource.query(slowQuery)
@@ -70,20 +72,11 @@ describe("sqljs driver > query execution time", () => {
                 // left loose so that time spent outside the measured section
                 // cannot fail a correct measurement.
                 expect(executionTimes[0]).to.be.at.least(elapsed / 3)
-            }),
-        ))
 
-    it("should report a slow query once it exceeds maxQueryExecutionTime", () =>
-        Promise.all(
-            dataSources.map(async (dataSource) => {
-                const logger = dataSource.options.logger as RecordingLogger
-                logger.slowQueries.length = 0
-
-                await dataSource.query(slowQuery)
-
+                // the same measurement decides whether the query is slow
                 expect(logger.slowQueries).to.have.lengthOf(1)
                 expect(logger.slowQueries[0].query).to.equal(slowQuery)
-                expect(logger.slowQueries[0].time).to.be.greaterThan(1)
+                expect(logger.slowQueries[0].time).to.equal(executionTimes[0])
             }),
         ))
 })
