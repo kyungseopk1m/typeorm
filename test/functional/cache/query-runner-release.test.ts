@@ -13,6 +13,9 @@ describe("cache > query runner release", () => {
     let dataSources: DataSource[]
     before(async () => {
         dataSources = await createTestingConnections({
+            // Spanner does not support the built-in cache table name, so the
+            // cache test suites (see custom-cache-provider) opt it out.
+            disabledDrivers: ["spanner"],
             entities: [__dirname + "/entity/*{.js,.ts}"],
             cache: true,
         })
