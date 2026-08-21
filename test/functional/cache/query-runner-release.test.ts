@@ -2,6 +2,7 @@ import { expect } from "chai"
 import "reflect-metadata"
 import type { DataSource } from "../../../src/data-source/DataSource"
 import type { QueryRunner } from "../../../src/query-runner/QueryRunner"
+import type { ReplicationMode } from "../../../src/driver/types/ReplicationMode"
 import {
     closeTestingConnections,
     createTestingConnections,
@@ -33,8 +34,10 @@ describe("cache > query runner release", () => {
     ): { unreleased: () => number; restore: () => void } {
         let unreleased = 0
         const originalCreate = dataSource.createQueryRunner.bind(dataSource)
-        dataSource.createQueryRunner = (...args: any[]): QueryRunner => {
-            const queryRunner: QueryRunner = (originalCreate as any)(...args)
+        dataSource.createQueryRunner = (
+            mode?: ReplicationMode,
+        ): QueryRunner => {
+            const queryRunner = originalCreate(mode)
             unreleased++
             const originalRelease = queryRunner.release.bind(queryRunner)
             queryRunner.release = () => {
@@ -50,7 +53,7 @@ describe("cache > query runner release", () => {
             // property the stub added puts the real one back rather than
             // leaving a bound copy of it behind.
             restore: () => {
-                delete (dataSource as any).createQueryRunner
+                Reflect.deleteProperty(dataSource, "createQueryRunner")
             },
         }
     }
@@ -112,10 +115,13 @@ describe("cache > query runner release", () => {
     it("should release the self-created runner in clear() even when clearTable throws", () =>
         Promise.all(
             dataSources.map(async (dataSource) => {
-                const tracker = trackCreatedRunners(dataSource, (queryRunner) => {
-                    queryRunner.clearTable = () =>
-                        Promise.reject(new Error("boom"))
-                })
+                const tracker = trackCreatedRunners(
+                    dataSource,
+                    (queryRunner) => {
+                        queryRunner.clearTable = () =>
+                            Promise.reject(new Error("boom"))
+                    },
+                )
                 try {
                     await expect(
                         dataSource.queryResultCache!.clear(),
