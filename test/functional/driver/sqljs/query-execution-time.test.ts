@@ -39,7 +39,8 @@ describe("sqljs driver > query execution time", () => {
             entities: [],
             enabledDrivers: ["sqljs"],
             subscribers: [QueryExecutionTimeSubscriber],
-            driverSpecific: { maxQueryExecutionTime: 1 },
+            // above the few milliseconds prepare() takes on its own
+            driverSpecific: { maxQueryExecutionTime: 50 },
             createLogger: () => new RecordingLogger(),
         })
     })
