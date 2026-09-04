@@ -110,7 +110,7 @@ export class ExpoQueryRunner extends AbstractSqliteQueryRunner {
                 query,
                 parameters,
                 false,
-                0,
+                undefined,
                 undefined,
                 err,
             )

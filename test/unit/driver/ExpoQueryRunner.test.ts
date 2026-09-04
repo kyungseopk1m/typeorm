@@ -29,7 +29,7 @@ describe("ExpoQueryRunner", () => {
 
         const queryRunner = new ExpoQueryRunner(driver)
         const query = "SELECT ?"
-        const parameters = [1, "a"]
+        const parameters = [1]
 
         const thrown = await queryRunner.query(query, parameters).then(
             () => undefined,
